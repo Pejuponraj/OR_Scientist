@@ -116,26 +116,31 @@ for c in crew_members:
 model.optimize()
 
 # -----------------------------
-# Results
+# # -----------------------------
+# Results (Save to file)
 # -----------------------------
-if model.status == GRB.OPTIMAL:
-    print("\nOptimal Solution Found")
-    print(f"Minimum Total Cost: {model.objVal:.2f}\n")
+with open("solution_output.txt", "w") as file:
 
-    print("Flight Assignments:")
-    for f in flights:
-        assigned = False
+    if model.status == GRB.OPTIMAL:
+        file.write("Optimal Solution Found\n")
+        file.write(f"Minimum Total Cost: {model.objVal:.2f}\n\n")
+
+        file.write("Flight Assignments:\n")
+        for f in flights:
+            assigned = False
+            for c in crew_members:
+                if x[c, f].X > 0.5:
+                    file.write(f"{f} ({flights[f]['start']}:00 - {flights[f]['end']}:00) -> {c}\n")
+                    assigned = True
+            if not assigned:
+                file.write(f"{f} -> No crew assigned\n")
+
+        file.write("\nCrew-wise Schedule:\n")
         for c in crew_members:
-            if x[c, f].X > 0.5:
-                print(f"{f} ({flights[f]['start']}:00 - {flights[f]['end']}:00) -> {c}")
-                assigned = True
-        if not assigned:
-            print(f"{f} -> No crew assigned")
+            assigned_flights = [f for f in flights if x[c, f].X > 0.5]
+            file.write(f"{c}: {assigned_flights}\n")
 
-    print("\nCrew-wise Schedule:")
-    for c in crew_members:
-        assigned_flights = [f for f in flights if x[c, f].X > 0.5]
-        print(f"{c}: {assigned_flights}")
+    else:
+        file.write("No optimal solution found.\n")
 
-else:
-    print("No optimal solution found.")
+print("✅ Results saved to solution_output.txt")
